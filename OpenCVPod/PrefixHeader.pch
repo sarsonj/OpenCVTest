@@ -1,0 +1,28 @@
+//
+//  PrefixHeader.pch
+//  Camapp
+//
+
+#ifndef PrefixHeader_pch
+#define PrefixHeader_pch
+
+// Include any system framework and library headers here that should be included in all compilation units.
+// You will also need to set the Prefix Header build setting of one or more of your targets to reference this file.
+
+
+#ifdef __cplusplus
+#import <opencv2/opencv.hpp>
+
+//#import <opencv2/core.hpp>
+#import <opencv2/video.hpp>
+#import <opencv2/imgcodecs/ios.h>
+#import <opencv2/videoio/cap_ios.h>
+#endif
+
+#import <Availability.h>
+#ifdef __OBJC__
+#import <UIKit/UIKit.h>
+#import <Foundation/Foundation.h>
+#endif
+
+#endif /* PrefixHeader_pch */
