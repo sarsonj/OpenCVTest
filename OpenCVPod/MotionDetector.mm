@@ -22,7 +22,6 @@ using namespace cv::motempl;
 }
   
   @property (nonatomic, assign) BOOL isCapturing;
-  @property (nonatomic, assign) NSTimeInterval lastCheckedFrameTime;
   
 @end
 
@@ -150,12 +149,6 @@ using namespace cv::motempl;
   }
   
   - (void)searchMotionWithBuffer:(CMSampleBufferRef)sampleBuffer motionBlock:(void (^)(BOOL))motionBlock {
-    if ([[NSDate date] timeIntervalSince1970] - self.lastCheckedFrameTime < 10 / 1000) {
-      printf("---- CANCEL DETECTION\n");
-      return;
-    }
-    self.lastCheckedFrameTime = [[NSDate date] timeIntervalSince1970];
-    printf("---- START DETECTION\n");
     dispatch_async(dispatch_get_global_queue( DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
       Mat image = [self sampleBufferToMat:sampleBuffer];
       BOOL motionDetected = [self checkImageForMotion:image diffThreshold:30];
@@ -163,7 +156,6 @@ using namespace cv::motempl;
         if (motionBlock) {
           motionBlock(motionDetected);
         }
-        printf("---- END DETECTION\n");
       });
     });
   }
@@ -173,7 +165,6 @@ using namespace cv::motempl;
   }
   
   - (Mat)sampleBufferToMat:(CMSampleBufferRef)sampleBuffer {
-    // convert from Core Media to Core Video
     CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
     CVPixelBufferLockBaseAddress(imageBuffer, 0);
     
@@ -201,8 +192,6 @@ using namespace cv::motempl;
       bytesPerRow = CVPixelBufferGetBytesPerRow(imageBuffer);
     
     }
-    
-    // delegate image processing to the delegate
     Mat image = Mat((int)height, (int)width, format_opencv, bufferAddress, bytesPerRow);
     
     CVPixelBufferUnlockBaseAddress( imageBuffer, 0 );
