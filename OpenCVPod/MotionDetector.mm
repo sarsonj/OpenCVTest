@@ -149,8 +149,8 @@ using namespace cv::motempl;
   }
   
   - (void)searchMotionWithBuffer:(CMSampleBufferRef)sampleBuffer motionBlock:(void (^)(BOOL))motionBlock {
+    Mat image = [self sampleBufferToMat:sampleBuffer];
     dispatch_async(dispatch_get_global_queue( DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-      Mat image = [self sampleBufferToMat:sampleBuffer];
       BOOL motionDetected = [self checkImageForMotion:image diffThreshold:30];
       dispatch_async(dispatch_get_main_queue(), ^(void){
         if (motionBlock) {
