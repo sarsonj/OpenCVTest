@@ -1,5 +1,5 @@
 use_frameworks!
 
 target 'OpenCVPod' do
-  pod 'OpenCV2'
+  pod 'libopencv-contrib', '~> 3.4.1'
 end

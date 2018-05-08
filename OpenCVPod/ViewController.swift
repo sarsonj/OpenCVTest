@@ -10,16 +10,16 @@ import UIKit
 
 class ViewController: UIViewController {
 
+  @IBOutlet private var imageView: UIImageView!
+  let wrapper = OpenCVWrapper()
+  
   override func viewDidLoad() {
     super.viewDidLoad()
-    // Do any additional setup after loading the view, typically from a nib.
+    self.imageView.image = wrapper.captureImage()
+    wrapper.startDetecting { [unowned self] image in
+      self.imageView.image = image
+    }
   }
-
-  override func didReceiveMemoryWarning() {
-    super.didReceiveMemoryWarning()
-    // Dispose of any resources that can be recreated.
-  }
-
 
 }
 

@@ -14,9 +14,9 @@
 #import <opencv2/opencv.hpp>
 
 //#import <opencv2/core.hpp>
-#import <opencv2/video.hpp>
-#import <opencv2/imgcodecs/ios.h>
-#import <opencv2/videoio/cap_ios.h>
+//#import <opencv2/video.hpp>
+//#import <opencv2/imgcodecs/ios.h>
+//#import <opencv2/videoio/cap_ios.h>
 #endif
 
 #import <Availability.h>

@@ -4,11 +4,23 @@
 //
 
 #import "OpenCVWrapper.h"
-#import <opencv2/video.hpp>
-#import <opencv2/imgcodecs/ios.h>
-#import <opencv2/videoio/cap_ios.h>
+#include "opencv2/optflow.hpp"
+#include "opencv2/imgproc.hpp"
+#include "opencv2/videoio.hpp"
+#include "opencv2/highgui.hpp"
+#include <time.h>
+#include <stdio.h>
+#include <ctype.h>
+
 using namespace cv;
 using namespace std;
+using namespace cv::motempl;
+
+@interface UIImage (UIImage_OpenCV)
+  
++ (UIImage *)imageWithCVMat:(const cv::Mat&)cvMat;
+  
+@end
 
 @interface OpenCVWrapper()
 {
@@ -22,14 +34,20 @@ using namespace std;
 
 @implementation OpenCVWrapper
 
+  - (instancetype)init {
+    if (self = [super init]) {
+      buf.resize(2);
+    }
+    return self;
+  }
+  
   + (NSString *)openCVVersionString {
     return [NSString stringWithFormat:@"OpenCV Version %s",  CV_VERSION];
   }
 
-  const double MHI_DURATION = 1;
-  
+  // various tracking parameters (in seconds)
+  const double MHI_DURATION = 5;
   const double MAX_TIME_DELTA = 0.5;
-  
   const double MIN_TIME_DELTA = 0.05;
   
   // number of cyclic frame buffer used for motion detection
@@ -40,19 +58,12 @@ using namespace std;
   
   // ring image buffer
   
-  IplImage **buf = 0;
+  vector<Mat> buf;
+  
   
   int last = 0;
   
   // temporary images
-  
-  IplImage *mhi = 0; // MHI
-  
-  IplImage *orient = 0; // orientation
-  
-  IplImage *mask = 0; // valid orientation mask
-  
-  IplImage *segmask = 0; // motion segmentation map
   
   CvMemStorage* storage = 0; // temporary storage
   
@@ -64,6 +75,7 @@ using namespace std;
   
   //  args – optional parameters
   
+  /*
   void update_mhi(IplImage* img, IplImage* dst, int diff_threshold) {
     double timestamp = (double)clock()/CLOCKS_PER_SEC; // get current time in seconds
     CvSize size = cvSize(img->width,img->height); // get current frame size
@@ -120,7 +132,9 @@ using namespace std;
     
     cvThreshold( silh, silh, diff_threshold, 1, CV_THRESH_BINARY ); // and threshold it
 
-    cvUpdateMotionHistory( silh, mhi, timestamp, MHI_DURATION ); // update MHI
+    
+    cv::motempl::updateMotionHistory(silh, mhi, timestamp, MHI_DURATION); // update MHI
+//    updateMotionHistory( silh, mhi, timestamp, MHI_DURATION ); // update MHI
     
 
   
@@ -250,63 +264,138 @@ using namespace std;
       
     }
   }
+   */
   
-  - (void)startDetecting {
-    if (self.isCapturing) {
-      return;
+  Mat mhi, orient, mask, segmask, zplane;
+  vector<cv::Rect> regions;
+  
+  void update_mhi(const Mat& img, Mat& dst, int diff_threshold)
+  {
+    double timestamp = (double)clock() / CLOCKS_PER_SEC; // get current time in seconds
+    cv::Size size = img.size();
+    int i, idx1 = last;
+    cv::Rect comp_rect;
+    double count;
+    double angle;
+    cv::Point center;
+    double magnitude;
+    Scalar color;
+    
+    // allocate images at the beginning or
+    // reallocate them if the frame size is changed
+    if (mhi.size() != size)
+    {
+      mhi = Mat::zeros(size, CV_32F);
+      zplane = Mat::zeros(size, CV_8U);
+      
+      buf[0] = Mat::zeros(size, CV_8U);
+      buf[1] = Mat::zeros(size, CV_8U);
     }
-    self.isCapturing = YES;
     
-    IplImage* motion = 0;
+    cvtColor(img, buf[last], COLOR_BGR2GRAY); // convert frame to grayscale
     
-    CvCapture* capture = cvCaptureFromCAM(0);
-    if(capture) {
-      while (self.isCapturing) {
-        
-        IplImage* image;
-        
-        if( !cvGrabFrame( capture ))
-        
-        break;
-        
-        image = cvRetrieveFrame( capture );
-        
-        
-        
-        if( image )
-        
-        {
-          
-          if( !motion )
-          
-          {
-            
-            motion = cvCreateImage( cvSize(image->width,image->height), 8, 3 );
-            
-            cvZero( motion );
-            
-            motion->origin = image->origin;
-            
-          } else {
-            NSLog(@"MOTION");
-          }
-          
-        }
-        
-        update_mhi( image, motion, 30 );
-        
+    int idx2 = (last + 1) % 2; // index of (last - (N-1))th frame
+    last = idx2;
+    
+    Mat silh = buf[idx2];
+    absdiff(buf[idx1], buf[idx2], silh); // get difference between frames
+    
+    threshold(silh, silh, diff_threshold, 1, THRESH_BINARY); // and threshold it
+    updateMotionHistory(silh, mhi, timestamp, MHI_DURATION); // update MHI
+    
+    // convert MHI to blue 8u image
+    mhi.convertTo(mask, CV_8U, 255. / MHI_DURATION, (MHI_DURATION - timestamp)*255. / MHI_DURATION);
+    
+    Mat planes[] = { mask, zplane, zplane };
+    merge(planes, 3, dst);
+    
+    // calculate motion gradient orientation and valid orientation mask
+    calcMotionGradient(mhi, mask, orient, MAX_TIME_DELTA, MIN_TIME_DELTA, 3);
+    
+    // segment motion: get sequence of motion components
+    // segmask is marked motion components map. It is not used further
+    regions.clear();
+    segmentMotion(mhi, segmask, regions, timestamp, MAX_TIME_DELTA);
+    
+    // iterate through the motion components,
+    // One more iteration (i == -1) corresponds to the whole image (global motion)
+    for (i = -1; i < (int)regions.size(); i++) {
+      
+      if (i < 0) { // case of the whole image
+        comp_rect = cv::Rect(0, 0, size.width, size.height);
+        color = Scalar(255, 255, 255);
+        magnitude = 100;
+      }
+      else { // i-th motion component
+        comp_rect = regions[i];
+        if (comp_rect.width + comp_rect.height < 100) // reject very small components
+        continue;
+        color = Scalar(0, 0, 255);
+        magnitude = 30;
       }
       
-      cvReleaseCapture( &capture );
+      // select component ROI
+      Mat silh_roi = silh(comp_rect);
+      Mat mhi_roi = mhi(comp_rect);
+      Mat orient_roi = orient(comp_rect);
+      Mat mask_roi = mask(comp_rect);
+      
+      // calculate orientation
+      angle = calcGlobalOrientation(orient_roi, mask_roi, mhi_roi, timestamp, MHI_DURATION);
+      angle = 360.0 - angle;  // adjust for images with top-left origin
+      
+      count = norm(silh_roi, NORM_L1); // calculate number of points within silhouette ROI
+      
+      // check for the case of little motion
+      if (count < comp_rect.width*comp_rect.height * 0.05)
+      continue;
+      
+      // draw a clock with arrow indicating the direction
+      center = cv::Point((comp_rect.x + comp_rect.width / 2),
+                     (comp_rect.y + comp_rect.height / 2));
+      
+      circle(img, center, cvRound(magnitude*1.2), color, 3, 16, 0);
+      line(img, center, cv::Point(cvRound(center.x + magnitude*cos(angle*CV_PI / 180)),
+                              cvRound(center.y - magnitude*sin(angle*CV_PI / 180))), color, 3, 16, 0);
     }
- 
+  }
+  
+  - (void)startDetecting:(void (^)(UIImage *))motionBlock {
+    [self checkMotion:motionBlock];
+  }
+  
+  - (void)checkMotion:(void (^)(UIImage *))motionBlock {
+    CvCapture *capture = cvCreateCameraCapture(0);
+    dispatch_async(dispatch_get_global_queue( DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
+      Mat image, motion;
+      IplImage *captureImage = cvQueryFrame(capture);
+      image = cvarrToMat(captureImage);
+      if (image.empty()) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+          [self checkMotion:motionBlock];
+        });
+      }
+      update_mhi(image, motion, 30);
+      UIImage *motionImage = [UIImage imageWithCVMat:image];
+      dispatch_async(dispatch_get_main_queue(), ^(void){
+        if (!motion.empty()) {
+          if (motionBlock) {
+            motionBlock(motionImage);
+          }
+          printf("asdasdasdasd");
+        }
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.25 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+          [self checkMotion:motionBlock];
+        });
+      });
+    });
   }
   
   - (void)stopCapturing {
     self.isCapturing = NO;
   }
   
-  + (UIImage *)captureImage {
+  - (UIImage *)captureImage {
     CvCapture *capture = cvCreateCameraCapture(0);
     IplImage *image = cvQueryFrame(capture);
     return [self UIImageFromIplImage:image];
@@ -345,7 +434,7 @@ using namespace std;
   }
   
     // NOTE You should convert color mode as RGB before passing to this function
-  + (UIImage *)UIImageFromIplImage:(IplImage *)image {
+  - (UIImage *)UIImageFromIplImage:(IplImage *)image {
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     // Allocating the buffer for CGImage
     NSData *data =
@@ -420,7 +509,7 @@ using namespace std;
       return [[UIImage alloc] initWithCVMat:cvMat];
     }
   
-  - (id)initWithCVMat:(const cv::Mat&)cvMat {
+  - (instancetype)initWithCVMat:(const cv::Mat&)cvMat {
       NSData *data = [NSData dataWithBytes:cvMat.data length:cvMat.elemSize() * cvMat.total()];
     
       CGColorSpaceRef colorSpace;

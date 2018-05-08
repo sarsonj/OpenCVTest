@@ -24,6 +24,7 @@
 		449A5937209ADAAE00B917ED /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 449A5936209ADAAE00B917ED /* Assets.xcassets */; };
 		449A593A209ADAAE00B917ED /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 449A5938209ADAAE00B917ED /* LaunchScreen.storyboard */; };
 		449A5944209AE29800B917ED /* OpenCVWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 449A5943209AE29800B917ED /* OpenCVWrapper.mm */; };
+		44ECFDF920A1AF3700A2C6F9 /* MotionDetector.mm in Sources */ = {isa = PBXBuildFile; fileRef = 44ECFDF720A1AF3600A2C6F9 /* MotionDetector.mm */; };
 		C0DA483D005BC3B947E8E30C /* Pods_OpenCVPod.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FDADE8B4C73464F728B85571 /* Pods_OpenCVPod.framework */; };
 /* End PBXBuildFile section */
 
@@ -50,6 +51,8 @@
 		449A5942209AE29800B917ED /* OpenCVWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OpenCVWrapper.h; sourceTree = "<group>"; };
 		449A5943209AE29800B917ED /* OpenCVWrapper.mm */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = OpenCVWrapper.mm; sourceTree = "<group>"; };
 		449A5945209AE45400B917ED /* PrefixHeader.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PrefixHeader.pch; sourceTree = "<group>"; };
+		44ECFDF720A1AF3600A2C6F9 /* MotionDetector.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MotionDetector.mm; sourceTree = "<group>"; };
+		44ECFDF820A1AF3700A2C6F9 /* MotionDetector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MotionDetector.h; sourceTree = "<group>"; };
 		5E89C7DC57D1B80959465291 /* Pods-OpenCVPod.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OpenCVPod.release.xcconfig"; path = "Pods/Target Support Files/Pods-OpenCVPod/Pods-OpenCVPod.release.xcconfig"; sourceTree = "<group>"; };
 		A97A33F9997AFEFA4D1C0F6C /* Pods-OpenCVPod.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OpenCVPod.debug.xcconfig"; path = "Pods/Target Support Files/Pods-OpenCVPod/Pods-OpenCVPod.debug.xcconfig"; sourceTree = "<group>"; };
 		FDADE8B4C73464F728B85571 /* Pods_OpenCVPod.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_OpenCVPod.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -103,6 +106,8 @@
 				449A5931209ADAAD00B917ED /* ViewController.swift */,
 				449A5942209AE29800B917ED /* OpenCVWrapper.h */,
 				449A5943209AE29800B917ED /* OpenCVWrapper.mm */,
+				44ECFDF820A1AF3700A2C6F9 /* MotionDetector.h */,
+				44ECFDF720A1AF3600A2C6F9 /* MotionDetector.mm */,
 				449A5945209AE45400B917ED /* PrefixHeader.pch */,
 				449A5933209ADAAD00B917ED /* Main.storyboard */,
 				449A5936209ADAAE00B917ED /* Assets.xcassets */,
@@ -236,6 +241,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				449A5932209ADAAD00B917ED /* ViewController.swift in Sources */,
+				44ECFDF920A1AF3700A2C6F9 /* MotionDetector.mm in Sources */,
 				449A5930209ADAAD00B917ED /* AppDelegate.swift in Sources */,
 				449A5944209AE29800B917ED /* OpenCVWrapper.mm in Sources */,
 			);
@@ -389,7 +395,10 @@
 				GCC_INPUT_FILETYPE = sourcecode.cpp.objcpp;
 				GCC_PREFIX_HEADER = "$(SRCROOT)/OpenCVPod/PrefixHeader.pch";
 				INFOPLIST_FILE = OpenCVPod/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.spaceotechnologies.OpenCVPod;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "OpenCVPod/OpenCVPod-Bridging-Header.h";
@@ -411,7 +420,10 @@
 				GCC_INPUT_FILETYPE = sourcecode.cpp.objcpp;
 				GCC_PREFIX_HEADER = "$(SRCROOT)/OpenCVPod/PrefixHeader.pch";
 				INFOPLIST_FILE = OpenCVPod/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.spaceotechnologies.OpenCVPod;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "OpenCVPod/OpenCVPod-Bridging-Header.h";

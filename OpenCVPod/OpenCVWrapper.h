@@ -8,9 +8,9 @@
 
 @interface OpenCVWrapper : NSObject
   
-  + (UIImage *)captureImage;
+  - (UIImage *)captureImage;
   + (NSString *)openCVVersionString;
   - (void)stopCapturing;
-  - (void)startDetecting;
+  - (void)startDetecting:(void (^)(UIImage *))motionBlock;
 
 @end

@@ -1,16 +1,16 @@
 PODS:
-  - OpenCV2 (3.4.1)
+  - libopencv-contrib (3.4.1)
 
 DEPENDENCIES:
-  - OpenCV2
+  - libopencv-contrib (~> 3.4.1)
 
 SPEC REPOS:
   https://github.com/CocoaPods/Specs.git:
-    - OpenCV2
+    - libopencv-contrib
 
 SPEC CHECKSUMS:
-  OpenCV2: c466a1f57df7004816302ada6fb3710b0de08ec3
+  libopencv-contrib: 01e8f05daf0e93e3f5fa395590fcf41ef312bef3
 
-PODFILE CHECKSUM: 09bdf2eae4485d7e05637e8ccb96f801328fe755
+PODFILE CHECKSUM: 93d006d58c31d81c5a3a87a2601fda89d7763216
 
 COCOAPODS: 1.5.0
